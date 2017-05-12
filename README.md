@@ -1,4 +1,3 @@
-# Split ÐAPP
 Simple decentralized application based on a Solidity smart contract that splits a deposit and distributes each half to two beneficiaries. 
 
 ![Screenshot](readme.png)
