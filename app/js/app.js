@@ -92,8 +92,7 @@ const bindData = () => {
         var self = this; 
         self.accounts = ko.observableArray(window.accounts);
         self.accountData = ko.observableArray([]);    
-        self.errorMessage = ko.observable(null);    
-
+  
         self.mapData = (data) => {
             return $.map(data, function(item){ return new AccountData(item)}); 
         }
@@ -107,7 +106,6 @@ const bindData = () => {
                             console.log(receipt); 
                             return getAccountData(false)
                                 .then(() => {
-                                    //var mappedData = $.map(window.accountData, function(item){ return new AccountData(item)}); 
                                     self.accountData(self.mapData(window.accountData));
                                     data.processing(false);                                    
                                 })
@@ -123,16 +121,13 @@ const bindData = () => {
                             console.log(receipt);   
                             return getAccountData(false)                     
                                 .then(() => {
-                                    //var mappedData = $.map(window.accountData, function(item){ return new AccountData(item)});
                                     self.accountData(self.mapData(window.accountData));
                                     data.processing(false);
                                 })
                         });
                 });            
         }
-        var mappedData = $.map(window.accountData, function(item){ return new AccountData(item) });
-        self.accountData(mappedData);
-        console.log(mappedData);
+        self.accountData(self.mapData(window.accountData));
     }    
 
     ko.applyBindings(new AccountDataViewModel());    
