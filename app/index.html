@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<title>Split Dapp</title>
+<meta charset="utf-8">
+<link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link href='//fonts.googleapis.com/css?family=Armata' rel='stylesheet'>
+<link href='//fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
+</head>
+<style>
+.address {
+    font-family: 'Armata';font-size:20px;
+}
+.title {
+    font-family: 'Roboto';font-size:30px;
+    padding-left: 50px; 
+    margin-top: 20px; 
+}
+.accountContainer {
+    padding-left: 50px; 
+    padding-top: 20px; 
+}
+</style>    
+<body>
+<script src="https://use.fontawesome.com/f33b7185f4.js"></script>    
+<script src="js/app.js"></script>
+<br/>
+<span class="title" style="margin-top:20px;">Split ÐAPP</span>
+
+<div style="display:none;" class="accountContainer" data-bind="visible: accountData().length > 0">
+    <div data-bind="foreach: accountData">    
+        <div class="row" style="margin-top:10px;"> 
+            <div class="well" style="width:50%;">
+                    <i class="fa fa-cubes fa-3x" data-bind="css: { 'fa-spin': processing() == true, 'text-danger': processing() == true }"></i>
+                    <table style="margin-top:15px;"> 
+                        <tr>
+                            <td><b>address:</b></td>
+                            <td>&nbsp;</td>
+                            <td class="address" data-bind="text: address"></td>
+                        </tr>
+                        <tr>
+                            <td><b>account balance:</b></td>
+                            <td>&nbsp;</td>
+                            <td data-bind="text: accountBalance"></td>
+                        </tr>
+                        <tr style="margin-bottom:10px;">
+                            <td><b>contract balance:</b></td>
+                            <td>&nbsp;</td>                
+                            <td data-bind="text: contractBalance, visible: contractBalance() <= 0 ">                                
+                            </td>       
+                            <td style="margin-bottom:50px;" data-bind="visible: contractBalance() > 0 ">
+                                <span class="label label-danger" data-bind="text: contractBalance"></span>
+                            </td>                                                   
+                        </tr>     
+                        <tr>
+                            <td colspan="3">&nbsp;</td>
+                        </tr>
+                        <tr>
+                            <td><b>Account A</b></td>
+                            <td>&nbsp;</td>                
+                            <td><select data-bind="options: accounts, value: accountA"></select></td>
+                        </tr> 
+                        <tr>
+                            <td><b>Account B</b></td>
+                            <td>&nbsp;</td>                
+                            <td><select data-bind="options: accounts, value: accountB"></select></td>
+                        </tr>                                                   
+                    </table>
+                    <div class="row" style="margin-top:15px;">
+                        <div class="col-md-4">
+                            <div>
+                                <div class="input-group margin-bottom-lg">
+                                    <span class="input-group-addon">
+                                        <a class="btn btn-default btn-xs" href="#" data-bind="click: $parent.split">
+                                        <i class="fa fa-exchange"></i></a>
+                                    </span>
+                                    <input class="form-control input-lg" type="text" placeholder="Amount to split" data-bind="textInput: amountToSplit">
+                                </div> 
+                            </div>                
+                        </div>
+                        <div class="col-md-6">
+                            <div>
+                                <a class="btn btn-default btn-lg" href="#" data-bind="click: $parent.withdraw">
+                                <i class="fa fa-money"></i> Withdraw</a>               
+                            </div>                  
+                        </div>            
+                    </div>                                             
+                </div>
+        </div>           
+    </div>    
+</div>    
+<div class="row" data-bind="visible: accountData().length == 0">
+    <div class="container">
+        <div class="col-xs-3">
+            <i class="fa fa-circle-o-notch fa-spin fa-5x fa-fw text-danger"></i>
+        </div>
+        <div class="col-xs-3">
+        </div>    
+        <div class="col-xs-3">         
+        </div>    
+        <div class="col-xs-3">         
+        </div>          
+    </div>      
+</div>
+<span data-bind="text: errorMessage"></span>
+<div style="display:none;" class="alert alert-danger" data-bind="visible: errorMessage() !== null">
+  <strong>Error:</strong> 
+  <span data-bind="text: errorMessage"></span>
+</div>
+</body>
+</html>
