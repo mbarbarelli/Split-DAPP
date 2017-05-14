@@ -1,5 +1,7 @@
 var Split = artifacts.require("./Split.sol"); 
 require("./utils/utils.js");
+const Promise = require("bluebird"); 
+Promise.promisifyAll(web3.eth, {suffix: "Promise"}); 
 
 contract("Split contract", (accounts) => {
 
@@ -27,10 +29,11 @@ contract("Split contract", (accounts) => {
     }); 
 
     it("Split contract should start with zero balance", () => {
-        web3.eth.getBalance(split_address, (err, _balance) => {
-            balance = _balance;
-            assert.equal(balance, 0, "Starting balance of contract should be zero"); 
-        });
+        return web3.eth.getBalancePromise(split_address)
+            .then(_balance => {
+                balance = _balance; 
+                assert.strictEqual(balance.toNumber(), 0, "Starting balance of contract should be zero");
+            });
     });
 
     it("Beneficiary accounts should start with zero balance", () => {
@@ -50,6 +53,8 @@ contract("Split contract", (accounts) => {
         var invalid_amount1 = 0;
         var invalid_amount2 = -1; 
         var gas_to_use = 30000;
+
+        // TO-DO: Replace synchronous calls with callbacks with promise returning methods. 
 
         web3.eth.getBalance(owner, (err, _balance) => {
             owner_balance_start = _balance.toNumber();
@@ -112,6 +117,8 @@ contract("Split contract", (accounts) => {
         var gas_to_use = 300000; 
         var wei_to_distribute = 1001;       
 
+        // TO-DO: Replace synchronous calls with callbacks with promise returning methods. 
+        
         web3.eth.getBalance(owner, (err, _balance) => {
             owner_balance_start = _balance.toNumber();
         });                  
@@ -135,6 +142,8 @@ contract("Split contract", (accounts) => {
         var split_amount = wei_to_distribute / 2; 
         var distribute_gas_used;
         var withdrawal_gas_used;
+
+        // TO-DO: Replace synchronous calls with callbacks with promise returning methods. 
 
         web3.eth.getBalance(owner, (err, _balance) =>{
             owner_balance_start = _balance.toNumber();
@@ -167,7 +176,7 @@ contract("Split contract", (accounts) => {
             })
             .then(receipt => {
                 distribute_gas_used = receipt.gasUsed;
-                events = split.Distributed().formatter(receipt.logs[0]).args;
+                events = split.LogDistributed().formatter(receipt.logs[0]).args;
                 assert.isTrue(events.result, "Distribution event should report successful operation."); 
                 assert.equal(account_one, events.accountA, "AccountA address should match account_one address"); 
                 assert.equal(account_two, events.accountB, "AccountB address should match account_two address."); 
@@ -195,7 +204,7 @@ contract("Split contract", (accounts) => {
                 return web3.eth.getTransactionReceiptMined(txObj.tx);
             })
             .then(receipt => {
-                events = split.BalanceWithdrawn().formatter(receipt.logs[0]).args; 
+                events = split.LogBalanceWithdrawn().formatter(receipt.logs[0]).args; 
                 withdrawal_gas_used = receipt.gasUsed; 
 
                 assert.isTrue(events.result, "Event log does not indicate successful withdrawal for account one.");
@@ -217,7 +226,7 @@ contract("Split contract", (accounts) => {
             .then(receipt => {
                 withdrawal_gas_used = receipt.gasUsed; 
 
-                events = split.BalanceWithdrawn().formatter(receipt.logs[0]).args; 
+                events = split.LogBalanceWithdrawn().formatter(receipt.logs[0]).args; 
                 assert.equal(events.account, account_two, "Account two does not match account address that made withdrawal.");
                 assert.isTrue(events.result, "Event log does not indicate successful withdrawal for account two.");
                 assert.equal(events.amountWithdrawn.valueOf(), account_two_contract_balance_end.valueOf(), "Amount withdrawn for account 2 does not match amount expected from contract balance.");
@@ -231,19 +240,28 @@ contract("Split contract", (accounts) => {
             })
     });
 
-    it("Should self destruct contract", () => {
-        return split.killMe({ from: owner })
-            .then(txObj => {
-                return web3.eth.getTransactionReceiptMined(txObj.tx)
+    it("Should self destruct contract", () => {        
+        web3.eth.getStorageAtPromise(split.address, 0)
+            .then(result => {
+                console.log("storage at contract address before killMe(): " + result);
+            });
+
+        return split.killMe.sendTransaction({ from: owner })
+            .then(txHash => {
+                return web3.eth.getTransactionReceiptMined(txHash)
             })
             .then(receipt => {
-                events = split.SplitDestroyed().formatter(receipt.logs[0]).args; 
+                events = split.LogSplitDestroyed().formatter(receipt.logs[0]).args; 
                 assert.isTrue(events.result, "Self destruct attempt should return true."); 
                 assert.equal(events.destroyer.valueOf(), owner, "Contract self-destruct caller should be owner");
                 return split.owner()
             })
             .then(result => {
-                assert.equal(result, '0x', "The contract owner should have been deleted");
+                assert.equal(result, '0x', "The value for the contract owner should be returned as 0x.  Current value: " + result);                
+                return web3.eth.getStorageAtPromise(split.address, 0);
+            })
+            .then(result => {
+                assert.equal(result, '0x00', "Contract storage should be empty. It is now " + result);
             })
     })
 
