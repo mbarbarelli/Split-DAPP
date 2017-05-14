@@ -19,30 +19,30 @@ Promise.promisifyAll(web3.eth, {suffix: "Promise"});
 
 const Split = truffleContract(splitJson);
 Split.setProvider(web3.currentProvider);
+window.accountData = [];
 let split; 
 
 window.addEventListener('load', () => {
-    window.accountData = []; 
     var accounts; 
  
     return Split.deployed()
         .then(instance => {
             split = instance; 
-            return web3.eth.getAccountsPromise()
-                .then(accounts => {
-                    window.coinbase = accounts[0]; 
-                    if(accounts.length == 0){
-                        throw new Error("No accounts detected.");
-                    } else {
-                        window.accounts = accounts;
-                    }
-                    return getAccountData(true);
-                });
+            return web3.eth.getAccountsPromise();
         })
+        .then(accounts => {
+            window.coinbase = accounts[0];
+            if (accounts.length == 0) {
+                throw new Error("No accounts detected.");
+            } else {
+                window.accounts = accounts;
+            }      
+            return getAccountData(true);      
+        }) 
         .catch(e => {
             window.error = e.message;
-            console.log(e.message);
-        });
+            console.log(e.message);            
+        })
 }); 
 
 const getAccountData = (bind) => {
@@ -65,16 +65,16 @@ const getAccountDataByAddress = (address) => {
     return web3.eth.getBalancePromise(address)
         .then(balance => {
             accountBalance = balance;
-            return split.getAccountBalance.call(address)
-                .then(balance => {
-                    contractBalance = balance; 
-                    window.accountData.push({ 
-                        address: address, 
-                        accountBalance: accountBalance, 
-                        contractBalance: contractBalance
-                     });
-                });
-        });    
+            return split.getAccountBalance.call(address);
+        })
+        .then(balance => {
+            contractBalance = balance;
+            window.accountData.push({
+                address: address,
+                accountBalance: accountBalance,
+                contractBalance: contractBalance
+            });
+        });   
 }
 
 const bindData = () => {    
@@ -91,45 +91,44 @@ const bindData = () => {
     function AccountDataViewModel() {
         var self = this; 
         self.accounts = ko.observableArray(window.accounts);
-        self.accountData = ko.observableArray([]);    
-  
+        self.accountData = ko.observableArray([]);                
+
         self.mapData = (data) => {
             return $.map(data, function(item){ return new AccountData(item)}); 
         }
 
         self.withdraw = (data) => {
-            return split.withdraw({ from: data.address() })
-                .then(txObj => {
+            return split.withdraw.sendTransaction({ from: data.address() })
+                .then(txHash => {
                     data.processing(true);
-                    return web3.eth.getTransactionReceiptMined(txObj.tx)
-                        .then(receipt => {
-                            console.log(receipt); 
-                            return getAccountData(false)
-                                .then(() => {
-                                    self.accountData(self.mapData(window.accountData));
-                                    data.processing(false);                                    
-                                })
-                        });
+                    return web3.eth.getTransactionReceiptMined(txHash);
+                })
+                .then(receipt => {
+                    console.log(receipt); 
+                    return getAccountData(false);
+                })
+                .then(() => {
+                    self.accountData(self.mapData(window.accountData));
                 });
-        }        
-        self.split = (data) => {
-            return split.distribute(data.accountA(), data.accountB(), { from: data.address(), value: data.amountToSplit() })
-                .then(txObj => {
-                    data.processing(true); 
-                    return web3.eth.getTransactionReceiptMined(txObj.tx)
-                        .then(receipt => {
-                            console.log(receipt);   
-                            return getAccountData(false)                     
-                                .then(() => {
-                                    self.accountData(self.mapData(window.accountData));
-                                    data.processing(false);
-                                })
-                        });
-                });            
         }
+  
+        self.split = (data) => {
+            return split.distribute.sendTransaction(data.accountA(), data.accountB(), { from: data.address(), value: data.amountToSplit()})
+                .then(txHash => {
+                    data.processing(true);
+                    return web3.eth.getTransactionReceiptMined(txHash);
+                })
+                .then(receipt => {
+                    console.log(receipt);
+                    return getAccountData(false);
+                })
+                .then(() => {
+                    self.accountData(self.mapData(window.accountData));
+                    data.processing(false);
+                });
+        }       
         self.accountData(self.mapData(window.accountData));
     }    
-
     ko.applyBindings(new AccountDataViewModel());    
 }
 
