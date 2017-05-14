@@ -2,12 +2,11 @@ pragma solidity ^0.4.8;
 
 contract Split {
     address public owner;
-    uint256 public value;
-    mapping (address => uint) public balances; 
+    mapping (address => uint) private balances; 
 
-    event Distributed(bool result, address accountA, address accountB, uint amountA, uint amountB); 
-    event BalanceWithdrawn(bool result, address account, uint amountWithdrawn); 
-    event SplitDestroyed(bool result, address destroyer);
+    event LogDistributed(bool indexed result, address indexed accountA, address indexed accountB, uint amountA, uint amountB); 
+    event LogBalanceWithdrawn(bool indexed result, address indexed account, uint indexed amountWithdrawn); 
+    event LogSplitDestroyed(bool indexed result, address indexed destroyer);
 
     function Split() payable {
         owner = msg.sender;
@@ -25,22 +24,22 @@ contract Split {
         payable 
         returns (bool)
     {
-        value = msg.value / 2; 
+        uint256 value = msg.value / 2; 
         balances[accountA] += value; 
         balances[accountB] += value; 
-        Distributed(true, accountA, accountB, balances[accountA], balances[accountB]); 
+        LogDistributed(true, accountA, accountB, balances[accountA], balances[accountB]); 
         return true;
     }
     
     function withdraw() returns (bool) {
-        var amount = balances[msg.sender];
+        uint amount = balances[msg.sender];
         balances[msg.sender] = 0; 
         if(msg.sender.send(amount)){
-            BalanceWithdrawn(true, msg.sender, amount);
+            LogBalanceWithdrawn(true, msg.sender, amount);
             return true;
         } else {
             balances[msg.sender] = amount;
-            BalanceWithdrawn(false, msg.sender, 0);           
+            LogBalanceWithdrawn(false, msg.sender, 0);           
             return false; 
         }
     }
@@ -54,7 +53,7 @@ contract Split {
     }
 
     function killMe() require (msg.sender == owner) returns (bool) {
-        SplitDestroyed(true, owner);
+        LogSplitDestroyed(true, owner);
         selfdestruct(owner);
         return true;        
     }
