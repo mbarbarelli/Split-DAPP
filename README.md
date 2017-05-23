@@ -48,3 +48,5 @@ split.BalanceWithdrawn().watch(function(error, result){
 });
 ```
 
+**Reviewed by OSH**
+
